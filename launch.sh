@@ -43,7 +43,11 @@ aws elb register-instances-with-load-balancer --load-balancer-name $ELBNAME --in
 
 aws elb configure-health-check --load-balancer-name $ELBNAME --health-check Target=HTTP:80/index.html,Interval=30,UnhealthyThreshold=2,HealthyThreshold=2,Timeout=3
 
-aws elb create-lb-cookie-stickiness-policy --load-balancer-name $ELBNAME --policy-name myDurationCookiePolicy
+aws elb create-lb-cookie-stickiness-policy --load-balancer-name $ELBNAME --policy-name my-duration-cookie-policy
+aws elb set-load-balancer-policies-of-listener --load-balancer-name $ELBNAME --load-balancer-port 80 --policy-names my-duration-cookie-policy
+
+#aws elb create-app-cookie-stickiness-policy --load-balancer-name $ELBNAME --policy-name gallery-app-cookie-policy --cookie-name gallery-app-cookie
+#aws elb set-load-balancer-policies-of-listener --load-balancer-name $ELBNAME --load-balancer-port 80 --policy-names gallery-app-cookie-policy
 
 echo "Waiting for 3 minutes(180 seconds) before opening ELB in web browser"
 for i in {0..180}; do
@@ -74,10 +78,10 @@ INCREASEARN=(`aws autoscaling put-scaling-policy --policy-name increaseGroupSize
 DECREASEARN=(`aws autoscaling put-scaling-policy --policy-name decreaseGroupSize --auto-scaling-group-name $AUTOSCALENAME --scaling-adjustment -3 --adjustment-type ChangeInCapacity`)
 
 #Add Capacity Clound Watch Metric Alarm
-aws cloudwatch put-metric-alarm --alarm-name cpuGreaterThanEqualTo30 --alarm-description "Alarm when CPU exceeds 30 percent" --metric-name CPUUtilization --namespace AWS/EC2 --statistic Average --period 120 --threshold 30 --comparison-operator GreaterThanOrEqualToThreshold --evaluation-periods 1 --unit Percent --dimensions "Name=AutoScalingGroupName,Value=$AUTOSCALENAME" --alarm-actions $INCREASEARN
+aws cloudwatch put-metric-alarm --alarm-name cpuGreaterThanEqualTo30 --alarm-description "Alarm when CPU exceeds 30 percent" --metric-name CPUUtilization --namespace AWS/EC2 --statistic Average --period 120 --threshold 30 --comparison-operator GreaterThanOrEqualToThreshold --evaluation-periods 1 --unit Percent --dimensions "Name=AutoScalingGroupName,Value=$AUTOSCALENAME" --alarm-actions $INCREASEARN $SNSTOPICMETRICSARN
 
 #Remove Capacity Cloud Watch Metric Alarm
-aws cloudwatch put-metric-alarm --alarm-name cpuLessThanEqualTo10 --alarm-description "Alarm when CPU decreases 10 percent" --metric-name CPUUtilization --namespace AWS/EC2 --statistic Average --period 120 --threshold 10 --comparison-operator LessThanOrEqualToThreshold  --evaluation-periods 1 --unit Percent --dimensions "Name=AutoScalingGroupName,Value=$AUTOSCALENAME" --alarm-actions $DECREASEARN
+aws cloudwatch put-metric-alarm --alarm-name cpuLessThanEqualTo10 --alarm-description "Alarm when CPU decreases 10 percent" --metric-name CPUUtilization --namespace AWS/EC2 --statistic Average --period 120 --threshold 10 --comparison-operator LessThanOrEqualToThreshold  --evaluation-periods 1 --unit Percent --dimensions "Name=AutoScalingGroupName,Value=$AUTOSCALENAME" --alarm-actions $DECREASEARN $SNSTOPICMETRICSARN
 
 #Create AWS RDS Instance
 aws rds create-db-instance --db-name $DBNAME --db-instance-identifier $DBINSTANCEIDENTIFIER --db-instance-class db.t2.micro --engine MySQL --master-username $DBUSERNAME --master-user-password $DBPASSWORD --allocated-storage 10 --publicly-accessible
