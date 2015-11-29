@@ -69,7 +69,13 @@ if [ ${#dbInstanceARR[@]} -gt 0 ]
         echo "DB Exists"
         aws rds delete-db-instance --db-instance-identifier mp1-sg --skip-final-snapshot
         aws rds wait db-instance-deleted --db-instance-identifier mp1-sg
-        echo "DB Deleted"
+        echo "Master DB Deleted"
+      fi
+      if [ ${dbInstanceARR[i]} == "mp-sg-rr" ];then
+        echo "DB Exists"
+        aws rds delete-db-instance --db-instance-identifier mp-sg-rr --skip-final-snapshot
+        aws rds wait db-instance-deleted --db-instance-identifier mp-sg-rr
+        echo "Read Replica DB Deleted"
       fi  
      done
 fi
